@@ -6,6 +6,7 @@ export const FeedView: React.FC = () => {
   const {
     videos,
     shorts,
+    liveStreams,
     setSelectedVideo,
     setActiveShortId,
     setCurrentView,
@@ -212,6 +213,64 @@ export const FeedView: React.FC = () => {
                 <span className="material-symbols-outlined text-[16px]">add</span>
                 <span>PUBLISH FIRST DROP</span>
               </button>
+            </div>
+          </div>
+        )}
+
+        {/* Live Broadcast Strip (Real-Time In-Browser Device Broadcasts) */}
+        {liveStreams.length > 0 && (
+          <div className="p-4 sm:p-5 rounded-2xl bg-neutral-950 border border-neutral-800 space-y-3">
+            <div className="flex items-center justify-between pb-2 border-b border-neutral-800">
+              <div className="flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-white animate-ping" />
+                <h2 className="text-sm font-mono font-bold uppercase tracking-wider text-white">
+                  Live Broadcasts ({liveStreams.length})
+                </h2>
+              </div>
+              <button
+                type="button"
+                onClick={() => setCurrentView('golive')}
+                className="px-3 py-1 bg-white hover:bg-neutral-200 text-black text-[11px] font-mono font-extrabold rounded-lg transition-colors flex items-center gap-1.5 shadow-sm"
+              >
+                <span className="material-symbols-outlined text-[14px]">videocam</span>
+                <span>GO LIVE DIRECT</span>
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 pt-1">
+              {liveStreams.map((stream) => (
+                <div
+                  key={stream.id}
+                  onClick={() => setCurrentView('golive')}
+                  className="group p-3 bg-black border border-neutral-850 hover:border-neutral-600 rounded-xl transition-all cursor-pointer flex gap-3 items-center"
+                >
+                  <div className="relative aspect-video w-32 shrink-0 rounded-lg overflow-hidden bg-neutral-900 border border-neutral-800">
+                    <img
+                      src={stream.thumbnailUrl || 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=300&q=80'}
+                      alt={stream.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                    />
+                    <div className="absolute top-1 left-1 px-1.5 py-0.2 bg-white text-black font-mono font-bold text-[8px] rounded uppercase flex items-center gap-0.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-black animate-ping" />
+                      LIVE
+                    </div>
+                    <div className="absolute bottom-1 right-1 px-1 py-0.2 bg-black/85 text-white font-mono text-[9px] rounded">
+                      {stream.viewerCount} watching
+                    </div>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-xs font-bold text-white line-clamp-2 leading-snug group-hover:underline">
+                      {stream.title}
+                    </h3>
+                    <p className="text-[11px] font-mono text-neutral-400 truncate mt-1">
+                      {stream.creatorName}
+                    </p>
+                    <span className="text-[10px] font-mono text-neutral-500 uppercase">
+                      {stream.category}
+                    </span>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         )}

@@ -25,6 +25,8 @@ import {
   NotificationItem,
   SafetyReport,
   CommentItem,
+  LiveStreamItem,
+  LiveChatMessage,
 } from '../types';
 
 export const dbService = {
@@ -642,6 +644,86 @@ export const dbService = {
       await setDoc(ref, report);
     } catch (e) {
       console.warn('[dbService] addReport error:', e);
+    }
+  },
+
+  // --- LIVE STREAMS & LIVE CHAT (DIRECT DEVICE WEBRTC & REALTIME CHAT) ---
+  subscribeLiveStreams(callback: (streams: LiveStreamItem[]) => void) {
+    try {
+      const sRef = collection(db, 'livestreams');
+      return onSnapshot(
+        sRef,
+        (snapshot) => {
+          const items: LiveStreamItem[] = [];
+          snapshot.forEach((d) => {
+            const data = d.data() as LiveStreamItem;
+            if (data.isLive) {
+              items.push(data);
+            }
+          });
+          items.sort((a, b) => b.startedAt.localeCompare(a.startedAt));
+          callback(items);
+        },
+        (error) => {
+          console.warn('[dbService] subscribeLiveStreams error:', error?.message);
+        }
+      );
+    } catch (e) {
+      console.warn('[dbService] subscribeLiveStreams failed to initialize:', e);
+      return () => {};
+    }
+  },
+
+  async saveLiveStream(stream: LiveStreamItem) {
+    try {
+      const ref = doc(db, 'livestreams', stream.id);
+      await setDoc(ref, stream, { merge: true });
+    } catch (e) {
+      console.warn('[dbService] saveLiveStream error:', e);
+    }
+  },
+
+  async updateLiveStreamStatus(streamId: string, isLive: boolean) {
+    try {
+      const ref = doc(db, 'livestreams', streamId);
+      await updateDoc(ref, { isLive });
+    } catch (e) {
+      console.warn('[dbService] updateLiveStreamStatus error:', e);
+    }
+  },
+
+  subscribeLiveChat(streamId: string, callback: (messages: LiveChatMessage[]) => void) {
+    try {
+      const cRef = collection(db, 'livechat');
+      return onSnapshot(
+        cRef,
+        (snapshot) => {
+          const items: LiveChatMessage[] = [];
+          snapshot.forEach((d) => {
+            const data = d.data() as LiveChatMessage;
+            if (data.streamId === streamId) {
+              items.push(data);
+            }
+          });
+          items.sort((a, b) => a.timestamp.localeCompare(b.timestamp));
+          callback(items);
+        },
+        (error) => {
+          console.warn('[dbService] subscribeLiveChat error:', error?.message);
+        }
+      );
+    } catch (e) {
+      console.warn('[dbService] subscribeLiveChat failed:', e);
+      return () => {};
+    }
+  },
+
+  async sendLiveChatMessage(message: LiveChatMessage) {
+    try {
+      const ref = doc(db, 'livechat', message.id);
+      await setDoc(ref, message);
+    } catch (e) {
+      console.warn('[dbService] sendLiveChatMessage error:', e);
     }
   },
 };

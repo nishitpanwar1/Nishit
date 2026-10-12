@@ -3,6 +3,7 @@ import { useApp } from '../context/AppContext';
 import { LaneType } from '../types';
 import { formatTimestamp } from '../utils/videoEnhancements';
 import { videoStorageService } from '../services/videoStorage';
+import { ShortsUploader, ImageKitUploadSuccess } from '../../components/studio/ShortsUploader';
 import {
   X,
   Upload,
@@ -39,7 +40,7 @@ export const UploadVideoModal: React.FC<UploadVideoModalProps> = ({
 }) => {
   const { uploadVideo, setSelectedVideo } = useApp();
 
-  const [creationMode, setCreationMode] = useState<'upload' | 'record' | 'url'>('upload');
+  const [creationMode, setCreationMode] = useState<'upload' | 'record' | 'url' | 'imagekit'>('upload');
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string>('');
@@ -417,14 +418,14 @@ export const UploadVideoModal: React.FC<UploadVideoModalProps> = ({
           /* Step 0: Selector with 3 Creation Modes */
           <div className="p-6 sm:p-10 space-y-6">
             {/* Mode Tabs */}
-            <div className="flex items-center justify-center gap-2 max-w-md mx-auto p-1 bg-black border border-neutral-800 rounded-xl">
+            <div className="flex flex-wrap items-center justify-center gap-1.5 max-w-xl mx-auto p-1 bg-black border border-neutral-800 rounded-xl">
               <button
                 type="button"
                 onClick={() => {
                   stopCameraPreview();
                   setCreationMode('upload');
                 }}
-                className={`flex-1 py-2 px-3 rounded-lg text-xs font-mono font-bold uppercase transition-colors flex items-center justify-center gap-1.5 ${
+                className={`py-2 px-3 rounded-lg text-xs font-mono font-bold uppercase transition-colors flex items-center justify-center gap-1.5 ${
                   creationMode === 'upload' ? 'bg-white text-black' : 'text-neutral-400 hover:text-white'
                 }`}
               >
@@ -433,8 +434,21 @@ export const UploadVideoModal: React.FC<UploadVideoModalProps> = ({
               </button>
               <button
                 type="button"
+                onClick={() => {
+                  stopCameraPreview();
+                  setCreationMode('imagekit');
+                }}
+                className={`py-2 px-3 rounded-lg text-xs font-mono font-bold uppercase transition-colors flex items-center justify-center gap-1.5 ${
+                  creationMode === 'imagekit' ? 'bg-white text-black' : 'text-neutral-400 hover:text-white'
+                }`}
+              >
+                <Film className="w-3.5 h-3.5" />
+                <span>ImageKit Shorts</span>
+              </button>
+              <button
+                type="button"
                 onClick={() => setCreationMode('record')}
-                className={`flex-1 py-2 px-3 rounded-lg text-xs font-mono font-bold uppercase transition-colors flex items-center justify-center gap-1.5 ${
+                className={`py-2 px-3 rounded-lg text-xs font-mono font-bold uppercase transition-colors flex items-center justify-center gap-1.5 ${
                   creationMode === 'record' ? 'bg-white text-black' : 'text-neutral-400 hover:text-white'
                 }`}
               >
@@ -447,7 +461,7 @@ export const UploadVideoModal: React.FC<UploadVideoModalProps> = ({
                   stopCameraPreview();
                   setCreationMode('url');
                 }}
-                className={`flex-1 py-2 px-3 rounded-lg text-xs font-mono font-bold uppercase transition-colors flex items-center justify-center gap-1.5 ${
+                className={`py-2 px-3 rounded-lg text-xs font-mono font-bold uppercase transition-colors flex items-center justify-center gap-1.5 ${
                   creationMode === 'url' ? 'bg-white text-black' : 'text-neutral-400 hover:text-white'
                 }`}
               >
@@ -495,7 +509,29 @@ export const UploadVideoModal: React.FC<UploadVideoModalProps> = ({
               </div>
             )}
 
-            {/* Mode 2: Camera Recording */}
+            {/* Mode: ImageKit Video Shorts CDN Ingestion */}
+            {creationMode === 'imagekit' && (
+              <div className="max-w-2xl mx-auto">
+                <ShortsUploader
+                  folder="/riseup/shorts"
+                  tags={['riseup', 'shorts', 'creator']}
+                  onUploadSuccess={(result: ImageKitUploadSuccess) => {
+                    setPreviewUrl(result.url);
+                    setTitle(result.name.replace(/\.[^/.]+$/, '').replace(/_/g, ' ') || 'New RiseUp Short');
+                    setIsShortsFormat(true);
+                    setDurationSec(Math.round(result.duration || 45));
+                    if (result.thumbnailUrl) {
+                      setThumbnailDataUrl(result.thumbnailUrl);
+                    }
+                    setIsUploadFinished(true);
+                    setChecksPassed(true);
+                    setUploadPercent(100);
+                    setSelectedFile(new File([''], result.name, { type: 'video/mp4' }));
+                    setStep(2);
+                  }}
+                />
+              </div>
+            )}
             {creationMode === 'record' && (
               <div className="max-w-lg mx-auto bg-black border border-neutral-800 rounded-2xl p-6 text-center space-y-4">
                 <div className="relative aspect-video max-w-md mx-auto bg-neutral-900 rounded-xl overflow-hidden shadow-inner flex items-center justify-center border border-neutral-700">

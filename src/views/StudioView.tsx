@@ -3,6 +3,7 @@ import { useApp } from '../context/AppContext';
 import { VideoItem, CommentItem } from '../types';
 import { videoStorageService } from '../services/videoStorage';
 import { compressImage } from '../utils/imageCompressor';
+import { ShortsUploader, ImageKitUploadSuccess } from '../../components/studio/ShortsUploader';
 
 type StudioSection =
   | 'dashboard'
@@ -23,14 +24,34 @@ export const StudioView: React.FC = () => {
     setSelectedVideo,
     setCurrentView,
     openUploadModal,
+    uploadVideo,
     comments,
     addComment,
   } = useApp();
 
   const [activeSection, setActiveSection] = useState<StudioSection>('dashboard');
-  const [contentTab, setContentTab] = useState<'videos' | 'shorts' | 'vault'>('videos');
+  const [contentTab, setContentTab] = useState<'videos' | 'shorts' | 'imagekit' | 'vault'>('videos');
   const [searchQuery, setSearchQuery] = useState('');
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  const handleImageKitShortSuccess = async (result: ImageKitUploadSuccess) => {
+    try {
+      await uploadVideo({
+        videoUrl: result.url,
+        thumbnailUrl: result.thumbnailUrl || result.url,
+        title: result.name.replace(/\.[^/.]+$/, '').replace(/_/g, ' ') || 'New RiseUp Short',
+        description: `Direct ImageKit CDN Ingestion (File ID: ${result.fileId})`,
+        category: 'Engineering',
+        durationSeconds: Math.round(result.duration || 45),
+        durationFormatted: `${Math.floor((result.duration || 45) / 60)}:${String(Math.floor((result.duration || 45) % 60)).padStart(2, '0')}`,
+        aspectRatio: '9:16',
+        tags: ['Shorts', 'RiseUp', 'ImageKit'],
+      });
+      showToast('ImageKit Short published to channel!');
+    } catch {
+      showToast('Short uploaded to ImageKit CDN successfully.');
+    }
+  };
 
   // Customization state
   const [customName, setCustomName] = useState(user.displayName || user.username || 'Creator');
@@ -606,6 +627,18 @@ export const StudioView: React.FC = () => {
                   >
                     Reels & Shorts ({shorts.length})
                   </button>
+                  <button
+                    type="button"
+                    onClick={() => setContentTab('imagekit')}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold uppercase border flex items-center gap-1.5 ${
+                      contentTab === 'imagekit'
+                        ? 'bg-white text-black border-white'
+                        : 'bg-neutral-950 text-neutral-400 hover:text-white border-neutral-800'
+                    }`}
+                  >
+                    <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+                    <span>ImageKit CDN Uploader</span>
+                  </button>
                 </div>
 
                 <div className="relative w-full sm:w-64">
@@ -622,8 +655,31 @@ export const StudioView: React.FC = () => {
                 </div>
               </div>
 
-              {/* Professional YouTube Studio-Inspired Table */}
-              <div className="bg-neutral-950 rounded-2xl border border-neutral-800 overflow-hidden shadow-2xl">
+              {/* ImageKit Direct CDN Uploader Component or Content Table */}
+              {contentTab === 'imagekit' ? (
+                <div className="space-y-4">
+                  <div className="p-4 bg-neutral-900/90 border border-neutral-800 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs font-mono">
+                    <div className="flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
+                      <span className="text-neutral-200 font-semibold uppercase">
+                        ImageKit CDN Direct Shorts Pipeline
+                      </span>
+                    </div>
+                    <span className="text-neutral-400 text-[11px]">
+                      Direct Client-to-CDN encrypted upload • Zero paid card dependencies
+                    </span>
+                  </div>
+
+                  <ShortsUploader
+                    title="RiseUp Studio Direct Shorts Ingestion"
+                    folder="/riseup/shorts"
+                    tags={['riseup', 'shorts', 'studio', 'creator']}
+                    onUploadSuccess={handleImageKitShortSuccess}
+                  />
+                </div>
+              ) : (
+                /* Professional YouTube Studio-Inspired Table */
+                <div className="bg-neutral-950 rounded-2xl border border-neutral-800 overflow-hidden shadow-2xl">
                 {filteredContent.length === 0 ? (
                   <div className="p-12 text-center space-y-3 font-mono">
                     <span className="material-symbols-outlined text-[32px] text-neutral-500">
@@ -761,6 +817,7 @@ export const StudioView: React.FC = () => {
                   </div>
                 )}
               </div>
+              )}
             </div>
           )}
 

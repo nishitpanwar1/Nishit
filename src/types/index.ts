@@ -337,3 +337,34 @@ export interface AuditLogItem {
   timestamp: string;
   ipPreview?: string;
 }
+
+export interface LiveChatMessage {
+  id: string;
+  streamId: string;
+  userId: string;
+  userName: string;
+  userAvatar?: string;
+  text: string;
+  timestamp: string;
+  isSuperChat?: boolean;
+  tokensPledged?: number;
+}
+
+export interface LiveStreamItem {
+  id: string;
+  creatorId: string;
+  creatorName: string;
+  creatorUsername: string;
+  creatorAvatar: string;
+  title: string;
+  description: string;
+  category: LaneType | string;
+  source: 'webcam' | 'screen';
+  isLive: boolean;
+  startedAt: string;
+  viewerCount: number;
+  likesCount: number;
+  tags: string[];
+  streamUrl?: string; // WebRTC media stream blob URL or live feed
+  thumbnailUrl?: string;
+}

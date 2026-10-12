@@ -16,6 +16,8 @@ import {
   LaneType,
   CommentItem,
   VideoClip,
+  LiveStreamItem,
+  LiveChatMessage,
 } from '../types';
 import {
   CURRENT_USER,
@@ -201,6 +203,21 @@ interface AppContextType {
   watchLaterIds: string[];
   toggleWatchLater: (video: VideoItem) => void;
   isWatchLater: (videoId: string) => boolean;
+
+  // Real-Time Live Streaming (Device Camera / Screen Direct Stream)
+  liveStreams: LiveStreamItem[];
+  activeLiveStream: LiveStreamItem | null;
+  setActiveLiveStream: (stream: LiveStreamItem | null) => void;
+  startLiveStream: (params: {
+    title: string;
+    category: string;
+    source: 'webcam' | 'screen';
+    streamUrl?: string;
+    thumbnailUrl?: string;
+  }) => LiveStreamItem;
+  endLiveStream: (streamId: string) => void;
+  liveChatMessages: Record<string, LiveChatMessage[]>;
+  sendLiveChatMessage: (streamId: string, text: string, tokensPledged?: number) => void;
 }
 
 const AppContext = createContext<AppContextType | null>(null);
@@ -478,6 +495,101 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [reports, setReports] = useState<SafetyReport[]>([]);
   const [isModerationOpen, setIsModerationOpen] = useState<boolean>(false);
 
+  // Real-time Live Streams & Chat
+  const [liveStreams, setLiveStreams] = useState<LiveStreamItem[]>(() => {
+    try {
+      const saved = localStorage.getItem('riseup_livestreams');
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    return [
+      {
+        id: 'stream_demo_1',
+        creatorId: 'usr_sarah_chen',
+        creatorName: 'Sarah Chen',
+        creatorUsername: 'sarah_chen',
+        creatorAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=256&q=80',
+        title: 'Building Distributed Fault-Tolerant Systems in Rust [LIVE CODING]',
+        description: 'Deep dive live engineering session implementing consensus protocols.',
+        category: 'Engineering',
+        source: 'webcam',
+        isLive: true,
+        startedAt: new Date(Date.now() - 1000 * 60 * 42).toISOString(),
+        viewerCount: 247,
+        likesCount: 184,
+        tags: ['Engineering', 'Live', 'Rust', 'WebRTC'],
+        thumbnailUrl: 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=800&q=80',
+      },
+      {
+        id: 'stream_demo_2',
+        creatorId: 'usr_david_k',
+        creatorName: 'David Kim',
+        creatorUsername: 'david_k',
+        creatorAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=256&q=80',
+        title: '05:00 AM Silent Calisthenics & Deep Work Session',
+        description: 'Early morning high-intensity discipline sprint and focus room live stream.',
+        category: 'Discipline',
+        source: 'webcam',
+        isLive: true,
+        startedAt: new Date(Date.now() - 1000 * 60 * 18).toISOString(),
+        viewerCount: 112,
+        likesCount: 96,
+        tags: ['Discipline', 'Fitness', 'Morning', 'Live'],
+        thumbnailUrl: 'https://images.unsplash.com/photo-1517838277536-f5f99be501cd?auto=format&fit=crop&w=800&q=80',
+      },
+    ];
+  });
+  const [activeLiveStream, setActiveLiveStream] = useState<LiveStreamItem | null>(null);
+  const [liveChatMessages, setLiveChatMessages] = useState<Record<string, LiveChatMessage[]>>(() => {
+    return {
+      stream_demo_1: [
+        {
+          id: 'msg_1',
+          streamId: 'stream_demo_1',
+          userId: 'usr_alex',
+          userName: 'Alex M.',
+          text: 'Great explanation on the Raft election timeouts!',
+          timestamp: '10:41 AM',
+        },
+        {
+          id: 'msg_2',
+          streamId: 'stream_demo_1',
+          userId: 'usr_elena',
+          userName: 'Elena Rostova',
+          text: 'Are you using Tokio or async-std for this actor model?',
+          timestamp: '10:43 AM',
+          isSuperChat: true,
+          tokensPledged: 20,
+        },
+        {
+          id: 'msg_3',
+          streamId: 'stream_demo_1',
+          userId: 'usr_marcus',
+          userName: 'Marcus Vance',
+          text: 'Super clean monochrome setup Sarah, loving the focus.',
+          timestamp: '10:44 AM',
+        },
+      ],
+      stream_demo_2: [
+        {
+          id: 'msg_4',
+          streamId: 'stream_demo_2',
+          userId: 'usr_jordan',
+          userName: 'Jordan Lee',
+          text: 'Day 14 streak locked in! Lets go 🔥',
+          timestamp: '05:12 AM',
+        },
+        {
+          id: 'msg_5',
+          streamId: 'stream_demo_2',
+          userId: 'usr_sarah_chen',
+          userName: 'Sarah Chen',
+          text: 'Locked in. Pure discipline.',
+          timestamp: '05:14 AM',
+        },
+      ],
+    };
+  });
+
   // Real-time Firestore Subscriptions & Auto-Sync
   useEffect(() => {
     // 1. Subscribe to User Profile
@@ -594,6 +706,22 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setNotifications(remoteNotifs);
     });
 
+    // 11. Subscribe to Live Streams (Real-time Broadcast Sync)
+    const unsubLive = dbService.subscribeLiveStreams((remoteStreams) => {
+      if (remoteStreams && remoteStreams.length > 0) {
+        setLiveStreams((prev) => {
+          const map = new Map<string, LiveStreamItem>();
+          remoteStreams.forEach((s) => map.set(s.id, s));
+          prev.forEach((s) => {
+            if (!map.has(s.id)) map.set(s.id, s);
+          });
+          const combined = Array.from(map.values()).filter((s) => s.isLive);
+          try { localStorage.setItem('riseup_livestreams', JSON.stringify(combined)); } catch {}
+          return combined;
+        });
+      }
+    });
+
     return () => {
       unsubUser();
       unsubVideos();
@@ -607,6 +735,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       unsubChallenges();
       unsubDuels();
       unsubNotifications();
+      unsubLive();
     };
   }, [user.id]);
 
@@ -1608,6 +1737,82 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
+  // Real-Time Live Stream Controls (Direct Device Camera/Screen Broadcast)
+  const startLiveStream = (params: {
+    title: string;
+    category: string;
+    source: 'webcam' | 'screen';
+    streamUrl?: string;
+    thumbnailUrl?: string;
+  }): LiveStreamItem => {
+    const streamId = `live_${Date.now()}`;
+    const newStream: LiveStreamItem = {
+      id: streamId,
+      creatorId: user.id,
+      creatorName: user.displayName || user.username || 'Creator',
+      creatorUsername: user.username || 'creator',
+      creatorAvatar: user.avatar || '',
+      title: params.title.trim() || 'Live Broadcast Session',
+      description: `Direct in-browser ${params.source === 'screen' ? 'screen share' : 'webcam'} live stream broadcasted via WebRTC.`,
+      category: params.category || 'Discipline',
+      source: params.source,
+      isLive: true,
+      startedAt: new Date().toISOString(),
+      viewerCount: 1,
+      likesCount: 1,
+      tags: [params.category || 'Live', 'Direct Broadcast', 'RiseUp'],
+      streamUrl: params.streamUrl,
+      thumbnailUrl: params.thumbnailUrl,
+    };
+
+    setLiveStreams((prev) => {
+      const updated = [newStream, ...prev.filter((s) => s.id !== streamId)];
+      try { localStorage.setItem('riseup_livestreams', JSON.stringify(updated)); } catch {}
+      return updated;
+    });
+
+    setActiveLiveStream(newStream);
+    dbService.saveLiveStream(newStream);
+
+    return newStream;
+  };
+
+  const endLiveStream = (streamId: string) => {
+    setLiveStreams((prev) => {
+      const updated = prev.map((s) => (s.id === streamId ? { ...s, isLive: false } : s));
+      try { localStorage.setItem('riseup_livestreams', JSON.stringify(updated)); } catch {}
+      return updated;
+    });
+
+    if (activeLiveStream?.id === streamId) {
+      setActiveLiveStream((prev) => (prev ? { ...prev, isLive: false } : null));
+    }
+
+    dbService.updateLiveStreamStatus(streamId, false);
+  };
+
+  const sendLiveChatMessage = (streamId: string, text: string, tokensPledged?: number) => {
+    if (!text.trim()) return;
+    const msg: LiveChatMessage = {
+      id: `chat_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
+      streamId,
+      userId: user.id,
+      userName: user.displayName || user.username || 'Member',
+      userAvatar: user.avatar,
+      text: text.trim(),
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      isSuperChat: Boolean(tokensPledged && tokensPledged > 0),
+      tokensPledged,
+    };
+
+    setLiveChatMessages((prev) => ({
+      ...prev,
+      [streamId]: [...(prev[streamId] || []), msg],
+    }));
+
+    dbService.sendLiveChatMessage(msg);
+  };
+
   return (
     <AppContext.Provider
       value={{
@@ -1707,6 +1912,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         watchLaterIds,
         toggleWatchLater,
         isWatchLater,
+        liveStreams,
+        activeLiveStream,
+        setActiveLiveStream,
+        startLiveStream,
+        endLiveStream,
+        liveChatMessages,
+        sendLiveChatMessage,
       }}
     >
       {children}

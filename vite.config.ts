@@ -160,6 +160,35 @@ function geminiApiPlugin(): Plugin {
           );
         }
 
+        // ImageKit CDN Authentication Endpoint (for direct client-to-CDN uploads)
+        if ((req.url === '/api/imagekit/auth' || req.url?.startsWith('/api/imagekit/auth?')) && req.method === 'GET') {
+          try {
+            const privateKey =
+              process.env.IMAGEKIT_PRIVATE_KEY ||
+              'private_+zcINue8pC4iqC9+fOVBs+lgxzI=';
+            const token = crypto.randomUUID();
+            const expire = Math.floor(Date.now() / 1000) + 2400; // 40 minutes in seconds
+            const signature = crypto
+              .createHmac('sha1', privateKey)
+              .update(token + expire)
+              .digest('hex');
+
+            res.setHeader('Content-Type', 'application/json');
+            res.setHeader('Cache-Control', 'no-store, max-age=0');
+            return res.end(
+              JSON.stringify({
+                token,
+                expire,
+                signature,
+              })
+            );
+          } catch (err: any) {
+            res.statusCode = 500;
+            res.setHeader('Content-Type', 'application/json');
+            return res.end(JSON.stringify({ error: 'Failed to generate ImageKit auth credentials' }));
+          }
+        }
+
         // 3. Kill Switch Administration Endpoint (PRD Section 23)
         if (req.url === '/api/kill-switches' && req.method === 'POST') {
           try {

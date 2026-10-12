@@ -114,6 +114,20 @@ export const Navbar: React.FC<NavbarProps> = ({ onToggleSidebar }) => {
 
       {/* Right Controls: Upload Drop, Notifications, Profile Avatar */}
       <div className="flex items-center gap-2 sm:gap-3 shrink-0 relative">
+        {/* Go Live Quick Action Button */}
+        <button
+          type="button"
+          onClick={() => {
+            setSelectedVideo(null);
+            setCurrentView('golive');
+          }}
+          className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-neutral-900 hover:bg-neutral-800 text-white border border-neutral-700 font-extrabold text-xs tracking-wider transition-colors shadow-sm font-mono"
+          title="Go Live Direct"
+        >
+          <span className="w-1.5 h-1.5 rounded-full bg-white animate-ping" />
+          <span>LIVE</span>
+        </button>
+
         {/* Upload Action Button */}
         <button
           type="button"

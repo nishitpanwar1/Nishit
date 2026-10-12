@@ -16,6 +16,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen = true }) => {
   const primaryNav = [
     { id: 'feed', label: 'Cinema Deck', icon: 'grid_view' },
     { id: 'shorts', label: 'Short Reels', icon: 'bolt' },
+    { id: 'golive', label: 'Go Live', icon: 'sensors' },
     { id: 'rooms', label: 'Focus Rooms', icon: 'groups' },
     { id: 'shop', label: 'Digital Vault', icon: 'diamond' },
   ];
