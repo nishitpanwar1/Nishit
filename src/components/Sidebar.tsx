@@ -21,10 +21,11 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen = true }) => {
   ];
 
   const youNav = [
+    { id: 'your-videos', label: 'Your Videos', icon: 'video_library', target: 'your-videos' },
     { id: 'history', label: 'History', icon: 'history', target: 'history' },
-    { id: 'watch-later', label: 'Saved Queue', icon: 'bookmark', target: 'watchlater' },
+    { id: 'saved', label: 'Saved', icon: 'bookmark', target: 'saved' },
+    { id: 'queue', label: 'Queue', icon: 'queue_music', target: 'queue' },
     { id: 'liked', label: 'Liked Videos', icon: 'thumb_up', target: 'liked' },
-    { id: 'your-videos', label: 'Your Videos', icon: 'video_library', target: 'profile' },
   ];
 
   const exploreNav = [

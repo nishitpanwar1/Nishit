@@ -571,8 +571,24 @@ export const UserAccountMenu: React.FC<UserAccountMenuProps> = ({
               </button>
             </div>
 
-            {/* SECTION 2: RiseUp Studio & Purchases/Memberships */}
+            {/* SECTION 2: Your Videos, RiseUp Studio & Purchases */}
             <div className="py-1 border-b border-neutral-800">
+              <button
+                type="button"
+                onClick={() => handleNavigate('your-videos')}
+                className="w-full flex items-center justify-between px-4 py-2.5 hover:bg-neutral-900 text-neutral-200 hover:text-white text-xs transition-colors"
+              >
+                <div className="flex items-center gap-3.5">
+                  <span className="material-symbols-outlined text-[20px] text-neutral-400">
+                    video_library
+                  </span>
+                  <span>Your Videos</span>
+                </div>
+                <span className="material-symbols-outlined text-[16px] text-neutral-500">
+                  chevron_right
+                </span>
+              </button>
+
               <button
                 type="button"
                 onClick={() => handleNavigate('studio')}

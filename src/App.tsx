@@ -75,14 +75,18 @@ const MainLayout: React.FC = () => {
         return <NotificationsView />;
       case 'search':
         return <SearchView />;
+      case 'your-videos':
+      case 'yourvideos':
+        return <LibraryView type="your-videos" />;
       case 'history':
         return <LibraryView type="history" />;
       case 'watchlater':
-        return <LibraryView type="watchlater" />;
-      case 'liked':
-        return <LibraryView type="liked" />;
       case 'saved':
         return <LibraryView type="saved" />;
+      case 'queue':
+        return <LibraryView type="queue" />;
+      case 'liked':
+        return <LibraryView type="liked" />;
       case 'clips':
         return <LibraryView type="clips" />;
       case 'profile':
