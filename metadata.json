@@ -1,0 +1,6 @@
+{
+  "name": "RiseUp - Creator Video & Discipline Platform",
+  "description": "Creator-first social video platform centered on discipline, accountability rooms, learning-vs-scrolling analytics, intent discovery, digital shop, and a transparent token economy.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

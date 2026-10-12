@@ -1,0 +1,342 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "User account identity, metrics, wallet balance and discipline status",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "username": { "type": "string" },
+        "displayName": { "type": "string" },
+        "avatar": { "type": "string" },
+        "bio": { "type": "string" },
+        "focusLane": { "type": "string" },
+        "targetDailyFocusHours": { "type": "number" },
+        "streakDays": { "type": "number" },
+        "longestStreakDays": { "type": "number" },
+        "tokens": { "type": "number" },
+        "lockedTokens": { "type": "number" },
+        "xp": { "type": "number" },
+        "isCreator": { "type": "boolean" },
+        "joinedAt": { "type": "string" }
+      },
+      "required": ["id", "username", "displayName", "tokens", "xp"]
+    },
+    "Video": {
+      "title": "Video",
+      "description": "Video document or Short with transcoding renditions and metrics",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "category": { "type": "string" },
+        "isShort": { "type": "boolean" },
+        "thumbnailUrl": { "type": "string" },
+        "videoUrl": { "type": "string" },
+        "durationFormatted": { "type": "string" },
+        "durationSeconds": { "type": "number" },
+        "viewsCount": { "type": "number" },
+        "likesCount": { "type": "number" },
+        "creatorId": { "type": "string" },
+        "creatorName": { "type": "string" },
+        "creatorUsername": { "type": "string" },
+        "creatorAvatar": { "type": "string" },
+        "tags": { "type": "array" },
+        "status": { "type": "string" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "title", "creatorId", "category"]
+    },
+    "Like": {
+      "title": "Like",
+      "description": "Unique like relationship between a user and a video",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "videoId": { "type": "string" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["userId", "videoId"]
+    },
+    "Save": {
+      "title": "Save",
+      "description": "Unique bookmark / saved reference between a user and a video",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "videoId": { "type": "string" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["userId", "videoId"]
+    },
+    "Comment": {
+      "title": "Comment",
+      "description": "Discussion comment on a video",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "videoId": { "type": "string" },
+        "userId": { "type": "string" },
+        "userName": { "type": "string" },
+        "userAvatar": { "type": "string" },
+        "body": { "type": "string" },
+        "likesCount": { "type": "number" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "videoId", "userId", "body"]
+    },
+    "Room": {
+      "title": "Room",
+      "description": "Virtual deep-work and accountability space",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "category": { "type": "string" },
+        "hostId": { "type": "string" },
+        "hostName": { "type": "string" },
+        "hostAvatar": { "type": "string" },
+        "membersCount": { "type": "number" },
+        "activeCount": { "type": "number" },
+        "currentStreak": { "type": "number" },
+        "isPrivate": { "type": "boolean" },
+        "tags": { "type": "array" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "name", "category", "hostId"]
+    },
+    "RoomMessage": {
+      "title": "RoomMessage",
+      "description": "Chat log message in an accountability room",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "roomId": { "type": "string" },
+        "senderId": { "type": "string" },
+        "senderName": { "type": "string" },
+        "senderAvatar": { "type": "string" },
+        "text": { "type": "string" },
+        "timestamp": { "type": "string" }
+      },
+      "required": ["id", "roomId", "senderId", "text"]
+    },
+    "Product": {
+      "title": "Product",
+      "description": "Digital engineering codebase or architectural asset for sale",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "priceTokens": { "type": "number" },
+        "category": { "type": "string" },
+        "format": { "type": "string" },
+        "coverUrl": { "type": "string" },
+        "creatorId": { "type": "string" },
+        "creatorName": { "type": "string" },
+        "creatorAvatar": { "type": "string" },
+        "fileSize": { "type": "string" },
+        "rating": { "type": "number" },
+        "salesCount": { "type": "number" },
+        "features": { "type": "array" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "title", "priceTokens", "category", "creatorId"]
+    },
+    "Order": {
+      "title": "Order",
+      "description": "Verified digital asset purchase transaction",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "buyerId": { "type": "string" },
+        "sellerId": { "type": "string" },
+        "productId": { "type": "string" },
+        "productTitle": { "type": "string" },
+        "priceTokens": { "type": "number" },
+        "idempotencyKey": { "type": "string" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "buyerId", "productId", "priceTokens"]
+    },
+    "Entitlement": {
+      "title": "Entitlement",
+      "description": "Access license granting a user perpetual access to a digital product",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "buyerId": { "type": "string" },
+        "productId": { "type": "string" },
+        "orderId": { "type": "string" },
+        "grantedAt": { "type": "string" }
+      },
+      "required": ["id", "buyerId", "productId"]
+    },
+    "TokenLedgerEntry": {
+      "title": "TokenLedgerEntry",
+      "description": "Append-only token transaction ledger record",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "delta": { "type": "number" },
+        "type": { "type": "string" },
+        "description": { "type": "string" },
+        "idempotencyKey": { "type": "string" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "userId", "delta", "type"]
+    },
+    "VaultLock": {
+      "title": "VaultLock",
+      "description": "Time-locked token deposit earning yield multiplier",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "amount": { "type": "number" },
+        "termDays": { "type": "number" },
+        "rewardMultiplier": { "type": "number" },
+        "unlockAt": { "type": "string" },
+        "status": { "type": "string" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "userId", "amount", "termDays"]
+    },
+    "Challenge": {
+      "title": "Challenge",
+      "description": "Arena coding and build sprint competition",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "category": { "type": "string" },
+        "description": { "type": "string" },
+        "daysRemaining": { "type": "number" },
+        "prizePoolTokens": { "type": "number" },
+        "participantsCount": { "type": "number" },
+        "rules": { "type": "array" },
+        "hasJoined": { "type": "boolean" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "title", "category"]
+    },
+    "Duel": {
+      "title": "Duel",
+      "description": "1v1 peer accountability challenge sprint",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "task": { "type": "string" },
+        "stakeTokens": { "type": "number" },
+        "timeLeft": { "type": "string" },
+        "status": { "type": "string" },
+        "challenger": { "type": "object" },
+        "challenged": { "type": "object" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "task", "stakeTokens"]
+    },
+    "NotificationItem": {
+      "title": "NotificationItem",
+      "description": "Personalized user notification regarding tips, duels, sales, or achievements",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "recipientId": { "type": "string" },
+        "type": { "type": "string" },
+        "title": { "type": "string" },
+        "message": { "type": "string" },
+        "read": { "type": "boolean" },
+        "actorName": { "type": "string" },
+        "actorAvatar": { "type": "string" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "recipientId", "title", "message"]
+    },
+    "SafetyReport": {
+      "title": "SafetyReport",
+      "description": "Trust & moderation report for abusive or copyright infringing content",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "reporterId": { "type": "string" },
+        "targetType": { "type": "string" },
+        "targetId": { "type": "string" },
+        "reason": { "type": "string" },
+        "details": { "type": "string" },
+        "status": { "type": "string" },
+        "timestamp": { "type": "string" }
+      },
+      "required": ["id", "reporterId", "targetType", "targetId", "reason"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "UserProfile",
+      "description": "User profiles, focus lane, stats, and balances"
+    },
+    "/videos/{videoId}": {
+      "schema": "Video",
+      "description": "Published technical videos and shorts metadata"
+    },
+    "/likes/{likeId}": {
+      "schema": "Like",
+      "description": "Like relations tracking user endorsements"
+    },
+    "/saves/{saveId}": {
+      "schema": "Save",
+      "description": "Saved reference bookmarks for library"
+    },
+    "/comments/{commentId}": {
+      "schema": "Comment",
+      "description": "Video discussions and comments"
+    },
+    "/rooms/{roomId}": {
+      "schema": "Room",
+      "description": "Active accountability rooms"
+    },
+    "/rooms/{roomId}/messages/{messageId}": {
+      "schema": "RoomMessage",
+      "description": "Messages inside accountability rooms"
+    },
+    "/products/{productId}": {
+      "schema": "Product",
+      "description": "Digital software assets and blueprints"
+    },
+    "/orders/{orderId}": {
+      "schema": "Order",
+      "description": "Completed digital product transactions"
+    },
+    "/entitlements/{entitlementId}": {
+      "schema": "Entitlement",
+      "description": "Product licenses granted to users"
+    },
+    "/token_ledger/{ledgerId}": {
+      "schema": "TokenLedgerEntry",
+      "description": "Audited token transaction movements"
+    },
+    "/vault_locks/{lockId}": {
+      "schema": "VaultLock",
+      "description": "Time-locked yield vault contracts"
+    },
+    "/challenges/{challengeId}": {
+      "schema": "Challenge",
+      "description": "Arena challenges and hackathons"
+    },
+    "/duels/{duelId}": {
+      "schema": "Duel",
+      "description": "1v1 peer accountability duels"
+    },
+    "/notifications/{notificationId}": {
+      "schema": "NotificationItem",
+      "description": "Personalized user alerts and system notices"
+    },
+    "/reports/{reportId}": {
+      "schema": "SafetyReport",
+      "description": "Content moderation and trust reports"
+    }
+  }
+}

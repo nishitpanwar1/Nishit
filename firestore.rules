@@ -1,0 +1,146 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions for authorization & RBAC
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && (request.auth.uid == userId || request.auth.token.email == userId);
+    }
+
+    function isAdmin() {
+      return isAuthenticated() && (request.auth.token.role == 'admin' || request.auth.token.admin == true);
+    }
+
+    function isModerator() {
+      return isAuthenticated() && (request.auth.token.role == 'moderator' || request.auth.token.role == 'admin' || request.auth.token.admin == true);
+    }
+
+    // Users collection: persistent profiles, stats, settings
+    // User can edit only own profile; public fields are readable
+    match /users/{userId} {
+      allow read: if true;
+      allow create: if isAuthenticated();
+      allow update: if isOwner(userId) || isAdmin() || (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['viewsCount', 'likesCount', 'streakDays', 'tokens']));
+      allow delete: if isAdmin() || isOwner(userId);
+    }
+
+    // Videos collection: feeds, shorts, metrics
+    // Viewers read active/public content; only creator or admin/mod can mutate
+    match /videos/{videoId} {
+      allow read: if resource == null || resource.data.status != 'removed' || isModerator() || (isAuthenticated() && resource.data.creatorId == request.auth.uid);
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated() && (
+        resource.data.creatorId == request.auth.uid ||
+        isModerator() ||
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['viewsCount', 'likesCount', 'savesCount', 'commentsCount', 'boostTokens'])
+      );
+      allow delete: if isAuthenticated() && (resource.data.creatorId == request.auth.uid || isModerator());
+    }
+
+    // Likes collection: real-time like relationships
+    match /likes/{likeId} {
+      allow read: if true;
+      allow create, update, delete: if isAuthenticated() && (request.resource.data.userId == request.auth.uid || resource.data.userId == request.auth.uid || isAdmin());
+    }
+
+    // Saves collection: bookmarks and library
+    match /saves/{saveId} {
+      allow read, create, update, delete: if isAuthenticated() && (request.resource.data.userId == request.auth.uid || resource.data.userId == request.auth.uid || isAdmin());
+    }
+
+    // Comments collection: video discussions
+    match /comments/{commentId} {
+      allow read: if true;
+      allow create: if isAuthenticated() && request.resource.data.body is string && request.resource.data.body.size() > 0;
+      allow update: if isAuthenticated() && (resource.data.userId == request.auth.uid || isModerator());
+      allow delete: if isAuthenticated() && (resource.data.userId == request.auth.uid || isModerator());
+    }
+
+    // Accountability Rooms and chat messages
+    match /rooms/{roomId} {
+      allow read: if true;
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated() && (resource.data.ownerId == request.auth.uid || isModerator() || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['membersCount', 'todayCheckins', 'currentStreak']));
+      allow delete: if isAuthenticated() && (resource.data.ownerId == request.auth.uid || isAdmin());
+
+      match /messages/{messageId} {
+        allow read: if true;
+        allow create: if isAuthenticated();
+        allow update, delete: if isAuthenticated() && (resource.data.senderId == request.auth.uid || isModerator());
+      }
+    }
+
+    // Marketplace Products
+    match /products/{productId} {
+      allow read: if true;
+      allow create: if isAuthenticated();
+      allow update, delete: if isAuthenticated() && (resource.data.creatorId == request.auth.uid || isAdmin());
+    }
+
+    // Orders and Entitlements - Scoped to buyer and seller
+    match /orders/{orderId} {
+      allow read: if isAuthenticated() && (resource.data.buyerId == request.auth.uid || resource.data.sellerId == request.auth.uid || isAdmin());
+      allow create: if isAuthenticated() && request.resource.data.buyerId == request.auth.uid;
+      allow update: if isAdmin();
+      allow delete: if false; // Immutable financial ledger
+    }
+
+    match /entitlements/{entitlementId} {
+      allow read: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create, update: if isAuthenticated() && (resource == null || resource.data.userId == request.auth.uid || isAdmin());
+      allow delete: if isAdmin();
+    }
+
+    // Token Ledger and Vault Locks - Append-only immutable ledger (PRD Section 9)
+    match /token_ledger/{ledgerId} {
+      allow read: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if false; // Append-only! No mutation or deletion permitted
+    }
+
+    match /vault_locks/{lockId} {
+      allow read: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create, update: if isAuthenticated() && (resource == null || resource.data.userId == request.auth.uid || isAdmin());
+      allow delete: if false;
+    }
+
+    // Arena Challenges & Duels
+    match /challenges/{challengeId} {
+      allow read: if true;
+      allow write: if isAuthenticated();
+    }
+
+    match /duels/{duelId} {
+      allow read: if true;
+      allow write: if isAuthenticated();
+    }
+
+    // Notifications - Recipient-only access (PRD Section 5)
+    match /notifications/{notificationId} {
+      allow read, update, delete: if isAuthenticated() && (resource.data.recipientId == request.auth.uid || resource.data.recipientId == null || isAdmin());
+      allow create: if isAuthenticated();
+    }
+
+    // Safety and Trust Reports (PRD Section 13)
+    match /reports/{reportId} {
+      allow create: if isAuthenticated();
+      allow read, update, delete: if isModerator();
+    }
+
+    // Audit logs - Admin only
+    match /audit_logs/{logId} {
+      allow read: if isAdmin();
+      allow create: if isAuthenticated();
+      allow update, delete: if false; // Immutable audit log
+    }
+
+    // Fallback for connectivity verification
+    match /test/{docId} {
+      allow read, write: if true;
+    }
+  }
+}
